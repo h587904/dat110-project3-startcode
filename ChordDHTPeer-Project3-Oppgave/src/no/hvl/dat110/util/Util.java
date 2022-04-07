@@ -40,12 +40,24 @@ public class Util {
 		
 		// a formula to check whether an id falls within the set {lower, upper} using the address size as our bound (modulos operation)
 		// it modifies 'upper' and 'id' when lower > upper e.g. set (6, 2) in mod 10 = {6, 7, 8, 9, 0, 1, 2}
-		
-		// implement: read the descriptions above
-		boolean cond = false;
 
-		
-		return cond;
+		//9 -> (6,2)
+		//9 -> (6,2+10)
+		//9 -> (6,12)
+
+		//4 -> (6,2)
+			//4 -> (6,2+10)
+				//4+10 -> (6,12)
+		//14 -> (6,12)
+
+		if(lower.compareTo(upper) == 1){
+			upper = upper.add(Hash.addressSize());
+
+			if(lower.compareTo(id) == 1){
+				id = id.add(Hash.addressSize());
+			}
+		}
+		return id.compareTo(lower) >= 0 && id.compareTo(upper) <= 0;
 	}
 	
 	public static List<String> toString(List<NodeInterface> list) throws RemoteException {

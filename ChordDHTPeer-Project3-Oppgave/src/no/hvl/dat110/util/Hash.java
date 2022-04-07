@@ -12,7 +12,7 @@ import java.net.UnknownHostException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-public class Hash { 
+public class Hash {
 	
 	private static BigInteger hashint; 
 	
@@ -29,7 +29,17 @@ public class Hash {
 		// convert the hex into BigInteger
 		
 		// return the BigInteger
-		
+
+		try {
+			MessageDigest md = MessageDigest.getInstance("MD5");
+			md.update(entity.getBytes());
+			byte[] digest = md.digest();
+			String hex = toHex(digest);
+			hashint = new BigInteger(hex, 16);
+
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
 		return hashint;
 	}
 	
@@ -44,15 +54,20 @@ public class Hash {
 		// compute the address size = 2 ^ number of bits
 		
 		// return the address size
-		
-		return null;
+
+		BigInteger addressSize = new BigInteger("2").pow(bitSize());
+		return addressSize;
 	}
 	
 	public static int bitSize() {
 		
 		int digestlen = 0;
-		
-		// find the digest length
+
+		try {
+			digestlen = MessageDigest.getInstance("MD5").getDigestLength();
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+		}
 		
 		return digestlen*8;
 	}

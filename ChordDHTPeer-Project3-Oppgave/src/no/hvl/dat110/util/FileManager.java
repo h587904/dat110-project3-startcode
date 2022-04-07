@@ -18,6 +18,7 @@ import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 
+import no.hvl.dat110.main.FileContentDownload;
 import no.hvl.dat110.middleware.Message;
 import no.hvl.dat110.rpc.interfaces.NodeInterface;
 import no.hvl.dat110.util.Hash;
@@ -64,12 +65,16 @@ public class FileManager {
 		
 		// store the hash in the replicafiles array.
 
+		for(int i = 0; i < numReplicas; i++){
+			String replica = filename + i;
+			BigInteger hash = Hash.hashOf(replica);
+			replicafiles[i] = hash;
+		}
 	}
 	
     /**
      * 
-     * @param bytesOfFile
-     * @throws RemoteException 
+     * @throws RemoteException
      */
     public int distributeReplicastoPeers() throws RemoteException {
     	int counter = 0;
@@ -89,8 +94,19 @@ public class FileManager {
     	// call the saveFileContent() on the successor
     	
     	// increment counter
-    	
-    		
+
+		Random r = new Random();
+		int index = r.nextInt(Util.numReplicas-1);
+
+		createReplicaFiles();
+
+		for(BigInteger key : replicafiles) {
+			NodeInterface successor = chordnode.findSuccessor(key);
+			successor.addKey(key);
+			successor.saveFileContent(filename, key, bytesOfFile, counter==index);
+			counter++;
+		}
+
 		return counter;
     }
 	
@@ -115,9 +131,16 @@ public class FileManager {
 		// get the metadata (Message) of the replica from the successor, s (i.e. active peer) of the file
 		
 		// save the metadata in the set succinfo.
-		
+
+		createReplicaFiles();
+
+		for(BigInteger key : replicafiles) {
+			NodeInterface successor = chordnode.findSuccessor(key);
+			Message metadata = successor.getFilesMetadata(key);
+			succinfo.add(metadata);
+		}
+
 		this.activeNodesforFile = succinfo;
-		
 		return succinfo;
 	}
 	
@@ -136,8 +159,11 @@ public class FileManager {
 		// use the primaryServer boolean variable contained in the Message class to check if it is the primary or not
 		
 		// return the primary
-		
-		return null; 
+
+		for(Message m : activeNodesforFile){
+			if (m.isPrimaryServer()) return Util.getProcessStub(m.getNodeIP(), m.getPort());
+		}
+		return null;
 	}
 	
     /**
@@ -233,7 +259,7 @@ public class FileManager {
 		return sizeOfByte;
 	}
 	/**
-	 * @param size the size to set
+	 * @param sizeOfByte the size to set
 	 */
 	public void setSizeOfByte(String sizeOfByte) {
 		this.sizeOfByte = sizeOfByte;
